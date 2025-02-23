@@ -3,3 +3,4 @@ selenium
 gunicorn
 requests
 chromedriver-autoinstaller
+tqdm
