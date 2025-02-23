@@ -3,6 +3,7 @@ import os
 import zipfile
 import requests
 import shutil
+import chromedriver_autoinstaller
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -10,36 +11,7 @@ from selenium.webdriver.common.by import By
 from tqdm import tqdm
 import traceback
 
-# Cấu hình Chrome Options
-chrome_options = Options()
-chrome_options.add_argument("--headless")  # Chạy không giao diện
-chrome_options.add_argument("--no-sandbox")
-chrome_options.add_argument("--disable-dev-shm-usage")
-
-# Đường dẫn đến Chrome binary và ChromeDriver
-CHROME_BINARY_PATH = "/opt/render/project/src/chrome/opt/google/chrome/google-chrome"
-CHROMEDRIVER_PATH = "/opt/render/project/src/chrome/chromedriver"
-
-# Chỉ định đường dẫn Chrome binary
-chrome_options.binary_location = CHROME_BINARY_PATH
-
-# Kiểm tra xem ChromeDriver có tồn tại không
-if not os.path.exists(CHROMEDRIVER_PATH):
-    raise Exception("⚠️ ChromeDriver không tồn tại. Kiểm tra quá trình cài đặt!")
-
-# Khởi tạo WebDriver
-service = Service(CHROMEDRIVER_PATH)
-driver = webdriver.Chrome(service=service, options=chrome_options)
-
-# Kiểm tra xem ChromeDriver chạy được không
-driver.get("https://www.google.com")
-print("✅ ChromeDriver đã hoạt động thành công!")
-
-# Đóng trình duyệt
-driver.quit()
-
 app = Flask(__name__)
-
 
 # Xử lý lỗi 500
 @app.errorhandler(500)
@@ -47,7 +19,6 @@ def internal_server_error(e):
     error_message = traceback.format_exc()
     print(error_message)  # In lỗi ra terminal
     return jsonify({"status": "error", "message": "Lỗi server!", "details": error_message}), 500
-
 
 # Thư mục lưu file upload & ảnh
 UPLOAD_FOLDER = "uploads"
@@ -60,17 +31,25 @@ for folder in [UPLOAD_FOLDER, IMAGE_FOLDER]:
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = {"txt"}
 
-
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# Cấu hình Selenium với đường dẫn chính xác
+chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+chromedriver_autoinstaller.install()  # Cài đặt Chromedriver nếu cần
+
+options = webdriver.ChromeOptions()
+options.add_argument("--headless")
+options.add_argument("--disable-dev-shm-usage")
+options.add_argument("--no-sandbox")
+
+# Khởi tạo trình duyệt một lần để sử dụng lại
+service = Service()
+driver = webdriver.Chrome(service=service, options=options)
 
 # Hàm tải ảnh từ danh sách URL
 def crawl_images(urls, save_directory):
-    # Khởi tạo WebDriver
-    service = Service(CHROMEDRIVER_PATH)
-    driver = webdriver.Chrome(service=service, options=chrome_options)
-
+    driver = webdriver.Chrome(options=options)
     os.makedirs(save_directory, exist_ok=True)
     downloaded_files = []
 
@@ -101,7 +80,6 @@ def crawl_images(urls, save_directory):
 
     driver.quit()
     return downloaded_files
-
 
 # API Upload File & Xử lý
 @app.route("/", methods=["GET", "POST"])
@@ -155,7 +133,6 @@ def upload_file():
 
     return render_template("index.html")
 
-
 # API Tải file ZIP
 @app.route("/download", methods=["GET"])
 def download():
@@ -163,7 +140,6 @@ def download():
     if os.path.exists(zip_filepath):
         return send_file(zip_filepath, as_attachment=True)
     return "File không tồn tại", 404
-
 
 if __name__ == "__main__":
     app.run(debug=True)
