@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload File - Flask</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <!-- Header -->
+    <header>
+        <div class="logo">
+            <span class="brand">Convert Link Lightshot</span>
+        </div>
+    </header>
+
+    <!-- Upload Section -->
+    <div class="upload-container">
+        <h1> Chuyển đổi link Lighshot online sang ảnh offline </h1>
+
+        <form id="upload-form" enctype="multipart/form-data">
+            <label for="file-upload" class="drop-zone">
+                <img src="{{ url_for('static', filename='images/upload-icon.png') }}" alt="Upload">
+                <p id="drop-text">Drop your file .txt here to convert</p>
+                <input type="file" name="file" id="file-upload" accept=".txt">
+            </label>
+            <p id="file-name" style="color: #007bff; font-weight: bold;"></p> <!-- Hiển thị tên file -->
+            <button type="submit" class="upload-btn">Submit</button>
+        </form>
+
+        <!-- Hiển thị quá trình xử lý -->
+        <p id="processing-text" style="display: none; font-weight: bold; color: orange;">
+            ⏳ Đang xử lý file...
+        </p>
+
+        <!-- Kết quả tải file -->
+        <div id="upload-result"></div>
+
+        <!-- Nút tải ảnh đã chuyển đổi (ẩn mặc định) -->
+        <a id="download-btn" href="/download" class="download-btn" download style="display: none; background: #007bff; color: white; padding: 10px 15px; border-radius: 5px; text-decoration: none; font-weight: bold;">
+            📥 Tải ảnh đã chuyển đổi
+        </a>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                let dropZone = document.querySelector(".drop-zone");
+                let fileInput = document.getElementById("file-upload");
+                let fileNameDisplay = document.getElementById("file-name");
+
+                // Ngăn chặn hành vi mặc định khi kéo file vào
+                dropZone.addEventListener("dragover", function (event) {
+                    event.preventDefault();
+                    dropZone.style.border = "2px dashed #007bff"; // Thêm hiệu ứng khi kéo vào
+                });
+
+                dropZone.addEventListener("dragleave", function () {
+                    dropZone.style.border = "2px dashed #ccc"; // Trả lại viền ban đầu
+                });
+
+                dropZone.addEventListener("drop", function (event) {
+                    event.preventDefault();
+                    dropZone.style.border = "2px dashed #ccc"; // Trả lại viền
+
+                    if (event.dataTransfer.files.length > 0) {
+                        let file = event.dataTransfer.files[0];
+
+                        // Kiểm tra định dạng file
+                        if (!file.name.endsWith(".txt")) {
+                            alert("Chỉ chấp nhận file định dạng .txt!");
+                            return;
+                        }
+
+                        // Gán file vào input file
+                        fileInput.files = event.dataTransfer.files;
+                        fileNameDisplay.innerText = `📄 ${file.name}`; // Hiển thị tên file
+                    }
+                });
+
+                // Khi chọn file bằng input, cũng hiển thị tên file
+                fileInput.addEventListener("change", function () {
+                    if (fileInput.files.length > 0) {
+                        fileNameDisplay.innerText = `📄 ${fileInput.files[0].name}`;
+                    }
+                });
+            });
+
+            document.getElementById("file-upload").addEventListener("change", function(event) {
+                let fileInput = event.target;
+                let fileNameDisplay = document.getElementById("file-name");
+                let dropText = document.getElementById("drop-text");
+
+                if (fileInput.files.length > 0) {
+                    let file = fileInput.files[0];
+
+                    if (!file.name.endsWith(".txt")) {
+                        alert("Chỉ chấp nhận file định dạng .txt!");
+                        fileInput.value = "";
+                        fileNameDisplay.innerHTML = "";
+                        dropText.innerHTML = "Drop your file .txt here to convert";
+                        return;
+                    }
+
+                    // Hiển thị tên file đã chọn
+                    fileNameDisplay.innerHTML = `<b>File đã chọn: ${file.name}</b>`;
+                    dropText.innerHTML = "File đã tải lên!";
+                }
+            });
+
+            document.getElementById("upload-form").addEventListener("submit", function(event) {
+                event.preventDefault(); // Ngăn form tải lại trang
+
+                let fileInput = document.getElementById("file-upload");
+                let resultDiv = document.getElementById("upload-result");
+                let processingText = document.getElementById("processing-text");
+                let downloadButton = document.getElementById("download-btn");
+
+                if (fileInput.files.length === 0) {
+                    alert("Vui lòng chọn một file!");
+                    return;
+                }
+
+                let file = fileInput.files[0];
+
+                // Kiểm tra định dạng file trước khi gửi lên server
+                if (!file.name.endsWith(".txt")) {
+                    alert("Chỉ chấp nhận file định dạng .txt!");
+                    return;
+                }
+
+                let formData = new FormData();
+                formData.append("file", file);
+
+                // Hiển thị biểu tượng loading
+                processingText.style.display = "block";
+                resultDiv.innerHTML = "";
+                downloadButton.style.display = "none"; // Ẩn nút tải ảnh trước khi xử lý
+
+                fetch("/", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    processingText.style.display = "none"; // Ẩn loading
+                    if (data.status === "success") {
+                        resultDiv.innerHTML = `<p style="color: green; font-weight: bold;">✔️ ${data.message}</p>`;
+
+                        // **Chỉ hiển thị nút tải ảnh nếu có "Tải ảnh thành công!"**
+                        if (data.message.includes("Tải ảnh thành công")) {
+                            downloadButton.style.display = "block"; // Hiển thị nút tải file
+                            startBlinking(downloadButton); // Kích hoạt hiệu ứng nhấp nháy
+                        }
+                    } else {
+                        resultDiv.innerHTML = `<p style="color: red; font-weight: bold;">❌ ${data.message}</p>`;
+                        downloadButton.style.display = "none";
+                    }
+                })
+                .catch(error => {
+                    console.error("Lỗi:", error);
+                    resultDiv.innerHTML = `<p style="color: red; font-weight: bold;">Lỗi khi tải file!</p>`;
+                });
+            });
+
+            // Hàm làm button nhấp nháy liên tục
+            function startBlinking(button) {
+                let isVisible = true;
+                setInterval(() => {
+                    button.style.opacity = isVisible ? "1" : "0.5";
+                    isVisible = !isVisible;
+                }, 500);
+            }
+        </script>
+
+        <p class="file-info">Lưu ý: Ảnh phải có định dạng là .txt, trong file gồm list các link ảnh, mỗi link là 1 dòng</p>
+
+        <!-- Hiển thị file mẫu -->
+        <div class="file-preview">
+            <h3>Nội dung file mẫu:</h3>
+        </div>
+
+        <!-- Nút tải file mẫu -->
+        <a href="{{ url_for('static', filename='links.txt') }}" class="download-btn" download>
+            📥 Tải file mẫu tham khảo
+        </a>
+
+    </div>
+
+</body>
+
+<footer class="footer">
+    Created by Trang
+</footer>
+</html>
