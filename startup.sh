@@ -1,16 +1,27 @@
 #!/bin/bash
 
-# Cài đặt Chrome
-echo "Cài đặt Chrome..."
-wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-apt-get update && apt-get install -y ./google-chrome-stable_current_amd64.deb
+# Cài đặt Google Chrome
+echo "Installing Google Chrome..."
+wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+sudo apt update
+sudo apt install -y google-chrome-stable
+
+# Kiểm tra phiên bản Chrome đã cài đặt
+google-chrome --version
 
 # Cài đặt ChromeDriver
-echo "Cài đặt ChromeDriver..."
-wget https://storage.googleapis.com/chrome-for-testing-public/133.0.0.0/linux64/chromedriver-linux64.zip
-unzip chromedriver-linux64.zip
-chmod +x chromedriver-linux64/chromedriver
-mv chromedriver-linux64/chromedriver /usr/local/bin/chromedriver
+echo "Installing ChromeDriver..."
+LATEST_CHROMEDRIVER_VERSION=$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE)
+wget "https://chromedriver.storage.googleapis.com/${LATEST_CHROMEDRIVER_VERSION}/chromedriver_linux64.zip" -O chromedriver_linux64.zip
 
-# Chạy ứng dụng
+# Giải nén và di chuyển vào thư mục hệ thống
+unzip chromedriver_linux64.zip
+sudo mv chromedriver /usr/local/bin/chromedriver
+sudo chmod +x /usr/local/bin/chromedriver
+
+# Kiểm tra phiên bản ChromeDriver đã cài đặt
+chromedriver --version
+
+# Chạy ứng dụng Flask
 gunicorn main:app

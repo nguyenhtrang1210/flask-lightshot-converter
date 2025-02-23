@@ -6,23 +6,34 @@ import shutil
 import chromedriver_autoinstaller
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from tqdm import tqdm
 import traceback
 
-# Đường dẫn đến Chrome và ChromeDriver trên Render
-CHROME_PATH = "/usr/bin/google-chrome"
+# Cấu hình Chrome Options
+chrome_options = Options()
+chrome_options.add_argument("--headless")  # Chạy không giao diện
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-dev-shm-usage")
+
+# Đường dẫn ChromeDriver
 CHROMEDRIVER_PATH = "/usr/local/bin/chromedriver"
 
-# Tạo service và thiết lập option cho trình duyệt
-options = webdriver.ChromeOptions()
-options.binary_location = CHROME_PATH
-options.add_argument("--headless")
-options.add_argument("--no-sandbox")
-options.add_argument("--disable-dev-shm-usage")
+# Kiểm tra xem ChromeDriver có tồn tại không
+if not os.path.exists(CHROMEDRIVER_PATH):
+    raise Exception("⚠️ ChromeDriver không tồn tại. Kiểm tra quá trình cài đặt!")
 
+# Khởi tạo WebDriver
 service = Service(CHROMEDRIVER_PATH)
-driver = webdriver.Chrome(service=service, options=options)
+driver = webdriver.Chrome(service=service, options=chrome_options)
+
+# Kiểm tra xem ChromeDriver chạy được không
+driver.get("https://www.google.com")
+print("✅ ChromeDriver đã hoạt động thành công!")
+
+# Đóng trình duyệt
+driver.quit()
 
 app = Flask(__name__)
 
