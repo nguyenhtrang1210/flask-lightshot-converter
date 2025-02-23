@@ -18,7 +18,7 @@ chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
 
 # Đường dẫn ChromeDriver
-CHROMEDRIVER_PATH = "/usr/local/bin/chromedriver"
+CHROMEDRIVER_PATH = "/opt/render/project/src/chromedriver"
 
 # Kiểm tra xem ChromeDriver có tồn tại không
 if not os.path.exists(CHROMEDRIVER_PATH):
