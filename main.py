@@ -17,6 +17,9 @@ chrome_options.add_argument("--headless")  # Chạy không giao diện
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
 
+# Chỉ định đường dẫn đến Chrome binary
+chrome_options.binary_location = "/usr/bin/google-chrome"  # Đường dẫn mặc định của Chrome trên Linux
+
 # Đường dẫn ChromeDriver
 CHROMEDRIVER_PATH = "/opt/render/project/src/chromedriver"
 
