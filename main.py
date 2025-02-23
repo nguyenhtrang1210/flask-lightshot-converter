@@ -10,6 +10,20 @@ from selenium.webdriver.common.by import By
 from tqdm import tqdm
 import traceback
 
+# Đường dẫn đến Chrome và ChromeDriver trên Render
+CHROME_PATH = "/usr/bin/google-chrome"
+CHROMEDRIVER_PATH = "/usr/local/bin/chromedriver"
+
+# Tạo service và thiết lập option cho trình duyệt
+options = webdriver.ChromeOptions()
+options.binary_location = CHROME_PATH
+options.add_argument("--headless")
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+
+service = Service(CHROMEDRIVER_PATH)
+driver = webdriver.Chrome(service=service, options=options)
+
 app = Flask(__name__)
 
 # Xử lý lỗi 500
