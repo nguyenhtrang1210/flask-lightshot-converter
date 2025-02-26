@@ -35,7 +35,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # Cấu hình Selenium với đường dẫn chính xác
-chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+chrome_path = r"D:\flask_project\flask-lightshot-converter\chrome-portable\chrome.exe"
 chromedriver_autoinstaller.install()  # Cài đặt Chromedriver nếu cần
 
 options = webdriver.ChromeOptions()
@@ -142,4 +142,5 @@ def download():
     return "File không tồn tại", 404
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    from waitress import serve
+    serve(app, host="0.0.0.0", port=5000)
