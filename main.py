@@ -35,7 +35,8 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # Cấu hình Selenium với đường dẫn chính xác
-chrome_path = r"D:\flask_project\flask-lightshot-converter\chrome-portable\chrome.exe"
+base_dir = os.path.dirname(os.path.abspath(__file__))
+chrome_path = os.path.join(base_dir, "chrome", "chrome.exe")
 chromedriver_autoinstaller.install()  # Cài đặt Chromedriver nếu cần
 
 options = webdriver.ChromeOptions()
